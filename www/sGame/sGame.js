@@ -583,7 +583,7 @@ const sGame = (function () {
             // サイズ
             this.size = new Size(V_WIDTH, V_HEIGHT);
             // 位置
-            this.pos = new Pos(0, 0);
+            this.pos = new Pos(V_WIDTH/2, V_HEIGHT/2);
             // 拡縮
             this.scale = new Scale(1.0, 1.0);
             // 透過
@@ -745,7 +745,7 @@ const sGame = (function () {
                     // 描画範囲終了
                     this.size.w, this.size.h,
                     // 描画位置（アンカーが真ん中になるように）
-                    (this.pos.x - this.size.getHelfW()), (this.pos_y - this.size.getHelfH()),
+                    (this.pos.x - this.size.getHelfW()), (this.pos.y - this.size.getHelfH()),
                     // サイズ
                     (this.size.w * this.scale.x), (this.size.h * this.scale.y)
                 );
@@ -758,8 +758,8 @@ const sGame = (function () {
         }
     }
     // タイルクラス
-    class Tile{
-        constructor(_col, _row){
+    class Tile {
+        constructor(_col, _row) {
             this.col = _col;
             this.row = _row;
         }
@@ -770,7 +770,7 @@ const sGame = (function () {
             // 親クラス呼び出し
             super(_name);
             // 現在のインデックス
-            this.now = 0;
+            this.now = 1;
             // タイルサイズ
             this.tile = new Tile(3, 3);
             // タイプ名
@@ -784,34 +784,51 @@ const sGame = (function () {
                 // 透明度
                 g.globalAlpha = this.alpha;
                 // 描画開始
-                g.drawImage(_res[this.res_idx],                                 // イメージオブジェクト                       
-                    (this.now_idx % this.idx_num_x) * this.width,               // 描画範囲開始x
-                    Math.floor((this.now_idx - 1) / this.idx_num_x) * this.height,    // 描画範囲開始y
-                    this.width, this.height,                                    // 描画範囲終了
-                    this.pos_x, this.pos_y,                                     // 描画位置
-                    this.width * this.scale_x, this.height * this.scale_y);     // サイズ
+                g.drawImage(
+                    // イメージオブジェクト                       
+                    _res[this.res],
+                    // 描画範囲開始x
+                    (this.now - 1 % this.tile.col) * this.size.w,
+                    // 描画範囲開始y
+                    Math.floor((this.now - 1) / this.tile.col) * this.size.h,
+                    // 描画範囲終了
+                    this.size.w, this.size.h,
+                    // 描画位置（アンカーが真ん中になるように）
+                    (this.pos.x - this.size.getHelfW()), (this.pos.y - this.size.getHelfH()),
+                    // サイズ
+                    this.size.w * this.scale.x, this.size.h * this.scale.y);
                 // コンテキストをsave時に戻す
                 g.restore();
             }
             catch (e) {
-                console.log("デモ描画エラー:" + this.name + ", " + this.res_idx);
+                console.log("デモ描画エラー:" + this.name);
             }
+        }
+    }
+    // 図形クラス
+    class Shape {
+        constructor(_color, _line, _fill) {
+            // 色
+            this.color = _color;
+            // 線の幅
+            this.line = _line;
+            // 塗りつぶすか
+            this.fill = _fill;
         }
     }
 
     // 円デモ
     class CircleDemo extends Demo {
-        constructor(_name, _color, _radius, _fill, _line, _pos_x = 0, _pos_y = 0, _scale_x = 1, _scale_y = 1, _alpha = 1) {
+        constructor(_name) {
             // 親クラス呼び出し
-            super(_name, null, _radius * 2, _radius * 2, _pos_x, _pos_y, _scale_x, _scale_y, _alpha);
-            // 色
-            this.color = _color;
+            super(_name);
             // 半径
-            this.radius = _radius;
-            // 塗りつぶし
-            this.fill = _fill;
-            // 線の幅
-            this.line = _line;
+            this.r = 100;
+            // サイズも半径に合わせる
+            this.size.w = this.r * 2;
+            this.size.h = this.r * 2;
+            // 図形プロパティ
+            this.shape = new Shape("#FFFFFF", 5, false);
             // タイプ名
             this.type_name = "CircleDemo";
         }
@@ -825,21 +842,22 @@ const sGame = (function () {
                 // パスリセット
                 g.beginPath();
                 // 円描画
-                g.arc(this.pos_x, this.pos_y, (this.radius * this.scale_x), 0 * Math.PI / 180, 360 * Math.PI / 180, false);
+                g.arc(this.pos.x, this.pos.y,
+                    (this.r * this.scale.x), 0 * Math.PI / 180, 360 * Math.PI / 180, false);
                 // 塗りつぶし
-                if (this.fill) {
-                    g.fillStyle = this.color;
+                if (this.shape.fill) {
+                    g.fillStyle = this.shape.color;
                     g.fill();
                 }
                 // 塗りつぶしではない
                 else {
-                    g.strokeStyle = this.color;
-                    g.lineWidth = this.line;
+                    g.strokeStyle = this.shape.color;
+                    g.lineWidth = this.shape.line;
                     g.stroke();
                 }
                 // 半径によって幅とか変わるので更新
-                this.width = this.radius * 2;
-                this.height = this.radius * 2;
+                this.size.w = this.r * 2;
+                this.size.h = this.r * 2;
 
                 // コンテキストをsave時に戻す
                 g.restore();
@@ -852,15 +870,11 @@ const sGame = (function () {
 
     // 四角形デモ
     class RectDemo extends Demo {
-        constructor(_name, _color, _fill, _line, _width = V_WIDTH, _height = V_HEIGHT, _pos_x = 0, _pos_y = 0, _scale_x = 1, _scale_y = 1, _alpha = 1) {
+        constructor(_name) {
             // 親クラス呼び出し
-            super(_name, null, _width, _height, _pos_x, _pos_y, _scale_x, _scale_y, _alpha);
-            // 色
-            this.color = _color;
-            // 塗りつぶし
-            this.fill = _fill;
-            // 線の幅
-            this.line = _line;
+            super(_name);
+            // 図形プロパティ
+            this.shape = new Shape("#FFFFFF", 5, false);
             // タイプ名
             this.type_name = "RectDemo";
         }
@@ -874,16 +888,20 @@ const sGame = (function () {
                 // パスリセット
                 g.beginPath();
                 // 四角形描画
-                g.rect(this.pos_x, this.pos_y, this.width, this.height);
+                g.rect(
+                    // 描画位置（アンカーが真ん中になるように）
+                    (this.pos.x - this.size.getHelfW()), (this.pos.y - this.size.getHelfH()),
+                    // サイズ
+                    this.size.w * this.scale.x, this.size.h * this.scale.y);
                 // 塗りつぶし
-                if (this.fill) {
-                    g.fillStyle = this.color;
+                if (this.shape.fill) {
+                    g.fillStyle = this.shape.color;
                     g.fill();
                 }
                 // 塗りつぶしではない
                 else {
-                    g.strokeStyle = this.color;
-                    g.lineWidth = this.line;
+                    g.strokeStyle = this.shape.color;
+                    g.lineWidth = this.shape.line;
                     g.stroke();
                 }
                 // コンテキストをsave時に戻す
@@ -896,13 +914,15 @@ const sGame = (function () {
     }
     // フォントデモ
     class FontDemo extends Demo {
-        constructor(_name, _text, _color, _width = V_WIDTH, _height = 20, _pos_x = 0, _pos_y = 0, _scale_x = 1, _scale_y = 1, _alpha = 1) {
+        constructor(_name) {
             // 親クラス呼び出し
-            super(_name, null, _width, _height, _pos_x, _pos_y, _scale_x, _scale_y, _alpha);
+            super(_name);
+            // 高さ
+            this.size.h = 20;
             // テキスト
-            this.text = _text;
+            this.text = "New Text";
             // 色
-            this.color = _color;
+            this.color = "#FFFFFF";
             // タイプ名
             this.type_name = "FontDemo";
         }
@@ -923,7 +943,7 @@ const sGame = (function () {
                 g.textBaseline = "middle";
 
                 // 描画
-                g.fillText(this.text, this.pos_x, this.pos_y, this.width);
+                g.fillText(this.text, this.pos.x, this.pos.y, this.size.w);
 
                 // コンテキストをsave時に戻す
                 g.restore();
@@ -1510,8 +1530,6 @@ const sGame = (function () {
             gTouchOn = true;
             // オンオフフラグoff
             gTouchOnOff = false;
-
-            //console.log("eMouseTouchOnMove:" + gTouchX + ", " + gTouchY);
         }
     };
     // タッチorマウスで離されたときのイベント処理
@@ -1574,24 +1592,24 @@ const sGame = (function () {
         return new Resouce(_name, _res);
     };
     // テクスチャデモの作成
-    let createTextuerDemo = function (_name, _res_idx, _width, _height, _pos_x, _pos_y, _scale_x, _scale_y, _alpha) {
-        return new TextureDemo(_name, _res_idx, _width, _height, _pos_x, _pos_y, _scale_x, _scale_y, _alpha);
+    let createTextuerDemo = function (_name) {
+        return new TextureDemo(_name);
     };
     // チップテクスチャデモの作成
-    let createChipTextuerDemo = function (_name, _res_idx, _start_idx, _idx_num_x, _idx_num_y, _width, _height, _pos_x, _pos_y, _scale_x, _scale_y, _alpha) {
-        return new ChipTextureDemo(_name, _res_idx, _start_idx, _idx_num_x, _idx_num_y, _width, _height, _pos_x, _pos_y, _scale_x, _scale_y, _alpha);
+    let createChipTextuerDemo = function (_name) {
+        return new ChipTextureDemo(_name);
     };
     // 円デモの作成
-    let createCircleDemo = function (_name, _color, _radius, _fill, _line, _pos_x, _pos_y, _scale_x, _scale_y, _alpha) {
-        return new CircleDemo(_name, _color, _radius, _fill, _line, _pos_x, _pos_y, _scale_x, _scale_y, _alpha);
+    let createCircleDemo = function (_name) {
+        return new CircleDemo(_name);
     };
     // 四角形デモの作成
-    let createRectDemo = function (_name, _color, _fill, _line, _width, _height, _pos_x, _pos_y, _scale_x, _scale_y, _alpha) {
-        return new RectDemo(_name, _color, _fill, _line, _width, _height, _pos_x, _pos_y, _scale_x, _scale_y, _alpha);
+    let createRectDemo = function (_name) {
+        return new RectDemo(_name);
     };
     // フォントデモの作成
-    let createFontDemo = function (_name, _text, _color, _width, _height, _pos_x, _pos_y, _scale_x, _scale_y, _alpha) {
-        return new FontDemo(_name, _text, _color, _width, _height, _pos_x, _pos_y, _scale_x, _scale_y, _alpha);
+    let createFontDemo = function (_name) {
+        return new FontDemo(_name);
     };
     // チップマップの作成
     let createChipMapDemo = function (_name, _res_idx, _idx_array, _wall_array, _chip_width, _chip_height, _idx_num_x, _idx_num_y, _w_num_x, _w_num_y, _width, _height, _d_pos_x, _d_pos_y, _pos_x, _pos_y, _alpha) {
