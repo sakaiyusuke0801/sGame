@@ -572,6 +572,23 @@ const sGame = (function () {
             this.y = _y;
         }
     }
+    // 物理世界におけるプロパティクラス
+    class WorldProp {
+        constructor(_onWorld, _fixedRotation, density, friction, restitution, bodytype) {
+            // 物理世界への影響があるか
+            this.onWord = _onWorld;
+            // ローテーション
+            this.fixedRotation = false;
+            // 密度
+            this.density = 1.0;
+            // 摩擦係数
+            this.friction = 1.5;
+            // 反発係数
+            this.restitution = 0.5;
+            // Box2dの剛体属性（初期値は静的）
+            this.bodytype = sBox2dBodyType.DynamicBody;
+        }
+    }
     // デモ基底クラス
     class Demo {
         constructor(_name) {
@@ -583,23 +600,14 @@ const sGame = (function () {
             // サイズ
             this.size = new Size(V_WIDTH, V_HEIGHT);
             // 位置
-            this.pos = new Pos(V_WIDTH/2, V_HEIGHT/2);
+            this.pos = new Pos(V_WIDTH / 2, V_HEIGHT / 2);
             // 拡縮
             this.scale = new Scale(1.0, 1.0);
             // 透過
             this.alpha = 1.0;
 
-            /* Box2dプロパティ */
-            // ローテーション
-            this.fixedRotation = false;
-            // 密度
-            this.density = 1.0;
-            // 摩擦係数
-            this.friction = 1.5;
-            // 反発係数
-            this.restitution = 0.5;
-            // Box2dの剛体属性（初期値は静的）
-            this.body = sBox2dBodyType.DynamicBody;
+            /* ワールドプロパティ */
+            this.worldProp = new WorldProp(true, false, 1.0, 1.5, 0.5, sBox2dBodyType.DynamicBody);
 
             /* リスナー */
             // 更新処理関数
@@ -953,8 +961,87 @@ const sGame = (function () {
             }
         }
     }
+    // マップデモ
+    class MapDemo extends Demo {
+        constructor(_name) {
+            // 親クラス呼び出し
+            super(_name);
+            // タイルサイズ
+            this.tile = new Tile(10, 10);
+            // マップ配列
+            this.map = null;
+            // 壁たち
+            this.walls = null;
+            // 左上を起点としたマップ描画のオフセット
+            this.map_offset = new Pos(0, 0);
+            // １チップのサイズ
+            this.chip_size = new Size(32, 32);
+            // マップ全体のサイズ
+            this.map_size = new Size(this.chip_size.x * this.tile.col, this.chip_size.y * this.tile.row);
+            // タイプ名
+            this.type_name = "MapDemo";
+        }
+        // 描画処理
+        draw(g, _res, _data) {
+            try {
+                // コンテキスト一時保存
+                g.save();
+                // 透明度
+                g.globalAlpha = this.alpha;
+
+                // マップ配列がnullなら、テクスチャ１枚をマップとして描画する
+                if (this.map == null) {
+
+                }
+                // マップ配列があるならチップマップ
+                else {
+                    // 描画済
+                    let dW = 0;
+                    let dh = 0;
+                    
+
+                    // 縦チップ
+                    for (let y = Math.floor(this.map_offset.row / this.chip_size.h); y < this.tile.row; y++) {
+                        // 横チップ
+                        for (let x = Math.floor(this.map_offset.col / this.chip_size.w); x < this.tile.col; x++) {
+                            try {
+                                // 描画開始
+                                g.drawImage(
+                                    // イメージオブジェクト                       
+                                    _res[this.res],
+                                    // 描画範囲開始x
+                                    ((this.map[x][y] - 1 % this.tile.col) * this.chip_size.w)
+                                    + ( this.map_offset.x - (this.chip_size.w * x)),
+                                    // 描画範囲開始y
+                                    (Math.floor((this.map[x][y] - 1) / this.tile.col) * this.chip_size.h) 
+                                    + ( this.map_offset.y - (this.chip_size.h * y)),
+                                    // 描画範囲終了
+                                    this.size.w, this.size.h,
+                                    // 描画位置（アンカーが真ん中になるように）
+                                    (this.pos.x - this.size.getHelfW()), (this.pos.y - this.size.getHelfH()),
+                                    // サイズ
+                                    this.size.w * this.scale.x, this.size.h * this.scale.y
+                                );
+                            }
+                            catch (e) {
+                                console.log("デモ描画エラー:" + this.name + " ① ");
+                            }
+                        }
+                    }
+                }
+
+                // コンテキストをsave時に戻す
+                g.restore();
+            }
+            catch (e) {
+                console.log("デモ描画エラー:" + this.name);
+            }
+        }
+    }
+
+
     // マップ基底クラス
-    class MapDemo {
+    class wMapDemo {
         constructor(_name, _res_idx, _wall_array, _w_chip_width, _w_chip_height, _w_num_x, _w_num_y, _width = V_WIDTH, _height = V_HEIGHT, _d_pos_x = 0, _d_pos_y = 0, _pos_x = 0, _pos_y = 0, _alpha = 1) {
             this.name = _name;
             this.res_idx = _res_idx;
