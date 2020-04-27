@@ -966,18 +966,22 @@ const sGame = (function () {
         constructor(_name) {
             // 親クラス呼び出し
             super(_name);
-            // タイルサイズ
-            this.tile = new Tile(10, 10);
-            // マップ配列
+            // チップタイルサイズ
+            this.chip_tile = new Tile(3, 5);
+            // マップタイルサイズ
+            this.map_tile = new Tile(30, 30);
+            // マップ配列 ※マップタイルサイズになっていることを期待する
             this.map = null;
-            // 壁たち
+            // 壁たち　※マップタイルサイズになっていることを期待する
             this.walls = null;
             // 左上を起点としたマップ描画のオフセット
             this.map_offset = new Pos(0, 0);
             // １チップのサイズ
             this.chip_size = new Size(32, 32);
             // マップ全体のサイズ
-            this.map_size = new Size(this.chip_size.x * this.tile.col, this.chip_size.y * this.tile.row);
+            this.map_size = new Size(
+            	this.chip_size.x * this.map_tile.col, 
+            	this.chip_size.y * this.map_tile.row);
             // タイプ名
             this.type_name = "MapDemo";
         }
@@ -995,38 +999,78 @@ const sGame = (function () {
                 }
                 // マップ配列があるならチップマップ
                 else {
-                    // 描画済
-                    let dW = 0;
-                    let dh = 0;
+                    // 横チップの開始位置
+                    let xStart = Math.floor(this.map_offset.x / this.chip_size.w);
+                    // 縦チップの開始位置
+                    let yStart = Math.floor(this.map_offset.y / this.chip_size.h);
+                    // 横チップの終了位置
+                    let xEnd = Math.floor((this.map_offset.x + this.size.x ) / this.chip_size.w);
+                    // 縦チップの終了位置
+                    let yEnd = Math.floor((this.map_offset.y + this.size.y ) / this.chip_size.h);
+                    // 終了位置の調整
+                    if(xEnd > this.map_tile.row){
+                    	xEnd = this.map_tile.row;
+                    }
+                    if(yEnd > this.map_tile.col){
+                    	yEnd = this.map_tile.col;
+                    }
                     
+                    // 描画カウンター
+                    let draw_c_x = 0;
+                    let draw_c_y = 0;
 
                     // 縦チップ
-                    for (let y = Math.floor(this.map_offset.row / this.chip_size.h); y < this.tile.row; y++) {
+                    for (let y = yStart; y <= yEnd; y++) {
                         // 横チップ
-                        for (let x = Math.floor(this.map_offset.col / this.chip_size.w); x < this.tile.col; x++) {
+                        for (let x = xStart; x <= xEnd; x++) {
                             try {
+                            	// 描画位置
+                            	let sx = ((this.map[x][y] - 1 % this.tile.col) * this.chip_size.w);
+                            	let sy = (Math.floor((this.map[x][y] - 1) / this.tile.col) * this.chip_size.h);
+                            	let sw = this.chip_size.w;
+                            	let sh = this.chip_size.h;
+                            	let dx = this.pos.x + (draw_c_x * this.chip_size.w);
+                            	let dy = this.pos.y + (draw_c_y * this.chip_size.h);
+                            	let dw = this.chip_size.w;
+                            	let dh = this.chip_size.h;
+                            	// 初回はオフセット位置調整
+                            	if( x == xStart ){
+                            		sx += ( this.map_offset.x - (this.chip_size.w * x));
+                            	}
+                            	if( y == yStart ){
+                            		sy += ( this.map_offset.y - (this.chip_size.h * y));
+                            	}
+                            	if( x == xEnd ){
+                            		sw -= ( this.map_offset.x - (this.chip_size.w * x));
+                            		dw -= ( this.map_offset.x - (this.chip_size.w * x));
+                            	}
+                            	if( y == yEnd ){
+                            		sh -= ( this.map_offset.y - (this.chip_size.h * y));
+                            		dh -= ( this.map_offset.y - (this.chip_size.h * y));
+                            	}
+                            
                                 // 描画開始
                                 g.drawImage(
                                     // イメージオブジェクト                       
                                     _res[this.res],
-                                    // 描画範囲開始x
-                                    ((this.map[x][y] - 1 % this.tile.col) * this.chip_size.w)
-                                    + ( this.map_offset.x - (this.chip_size.w * x)),
-                                    // 描画範囲開始y
-                                    (Math.floor((this.map[x][y] - 1) / this.tile.col) * this.chip_size.h) 
-                                    + ( this.map_offset.y - (this.chip_size.h * y)),
+                                    // 描画範囲開始
+                                    sx,sy,
                                     // 描画範囲終了
-                                    this.size.w, this.size.h,
-                                    // 描画位置（アンカーが真ん中になるように）
-                                    (this.pos.x - this.size.getHelfW()), (this.pos.y - this.size.getHelfH()),
+                                    sw, sh,
+                                    // 描画位置（これは左上）
+                                    dx, dy,
                                     // サイズ
-                                    this.size.w * this.scale.x, this.size.h * this.scale.y
+                                    dw, dh
                                 );
                             }
                             catch (e) {
                                 console.log("デモ描画エラー:" + this.name + " ① ");
                             }
+                            // xカウンターの更新
+                            draw_c_x++;
                         }
+                        // yカウンターの更新
+                        draw_c_y++;
                     }
                 }
 
@@ -1035,349 +1079,6 @@ const sGame = (function () {
             }
             catch (e) {
                 console.log("デモ描画エラー:" + this.name);
-            }
-        }
-    }
-
-
-    // マップ基底クラス
-    class wMapDemo {
-        constructor(_name, _res_idx, _wall_array, _w_chip_width, _w_chip_height, _w_num_x, _w_num_y, _width = V_WIDTH, _height = V_HEIGHT, _d_pos_x = 0, _d_pos_y = 0, _pos_x = 0, _pos_y = 0, _alpha = 1) {
-            this.name = _name;
-            this.res_idx = _res_idx;
-            this.wall_array = _wall_array;
-            this.w_chip_width = _w_chip_width;
-            this.w_chip_height = _w_chip_height;
-            this.w_num_x = _w_num_x;
-            this.w_num_y = _w_num_y;
-            this.width = _width;
-            this.height = _height;
-            this.d_pos_x = _d_pos_x;
-            this.d_pos_y = _d_pos_y;
-            this.pos_x = _pos_x;
-            this.pos_y = _pos_y;
-            this.alpha = _alpha;
-            this.update = null;
-
-            // プレイヤーデモ
-            this.playerDemo = null;
-            // 衝突範囲（プレイヤーの左上を起点として）
-            this.hit_range_x = 0;
-            this.hit_range_y = 0;
-            this.hit_range_w = 0;
-            this.hit_range_h = 0;
-
-            // マップを描画するキャンバス
-            this.canvas = document.createElement("canvas");
-            // マップを描画するコンテキスト
-            this.context = this.canvas.getContext("2d");
-        }
-        // フレーム処理
-        updateFunc(_scene) {
-            if (this.update != null) {
-                // 登録関数を実行
-                this.update(_scene, gTouchOn, gTouchOnOff, gTouchX, gTouchY, gTouchMoveX, gTouchMoveY, gTouchOffX, gTouchOffY);
-            }
-        }
-        // フレーム処理セット
-        setUpdate(_update) {
-            this.update = _update;
-        }
-        // プレイヤーデモセット
-        setPlayerDemo(_demo, _hit_range_x, _hit_range_y, _hit_range_w, _hit_range_h) {
-            if (_demo != null) {
-                // 今のところ以下３つのデモ
-                if (_demo.type_name == "TextureDemo" ||
-                    _demo.type_name == "ChipTextureDemo" ||
-                    _demo.type_name == "RectDemo") {
-                    this.playerDemo = _demo;
-                    this.hit_range_x = _hit_range_x;
-                    this.hit_range_y = _hit_range_y;
-                    this.hit_range_w = _hit_range_w;
-                    this.hit_range_h = _hit_range_h;
-                }
-            }
-        }
-        // ローカル関数
-        pixel_1_Move(_x, _y) {
-            // 移動後のd_pox座標
-            let a_d_pos_x = this.d_pos_x + _x;
-            let a_d_pos_y = this.d_pos_y + _y;
-
-            // プレイヤーが設定されている
-            if (this.playerDemo != null) {
-                // プレイヤーの座標
-                let playerX = this.playerDemo.pos_x;
-                let playerY = this.playerDemo.pos_y;
-
-                // プレイヤー位置の補正判断
-                let isPlayerCenterX = false;
-                let isPlayerCenterY = false;
-
-                // プレイヤーが真ん中ではない
-                if (((playerX) + (this.playerDemo.width / 2)) != ((this.width / 2) + this.pos_x)) {
-                    // 仮移動
-                    let temp = playerX + _x;
-                    // プレイヤーがマップからはみ出ないようにする
-                    if (((temp + (this.playerDemo.width)) < (this.width + this.pos_x)) &&
-                        ((temp) > this.pos_x)) {
-                        playerX = temp;
-                    }
-                    // 画面は動かさない
-                    a_d_pos_x = this.d_pos_x;
-                    // フラグON
-                    isPlayerCenterX = true;
-                }
-                // プレイヤーが真ん中ではない
-                if (((playerY) + (this.playerDemo.height / 2)) != ((this.height / 2) + this.pos_y)) {
-                    // 仮移動
-                    let temp = playerY + _y;
-                    // プレイヤーがマップからはみ出ないようにする
-                    if (((temp + (this.playerDemo.height)) < (this.height + this.pos_y)) &&
-                        ((temp) > this.pos_y)) {
-                        playerY = temp;
-                    }
-                    // 画面は動かさない
-                    a_d_pos_y = this.d_pos_y;
-                    // フラグON
-                    isPlayerCenterY = true;
-                }
-
-
-                // 補正済ではない
-                if (!isPlayerCenterX) {
-                    // 仮移動
-                    let temp = playerX;
-                    // 描画範囲がキャンバスの範囲を超えていたらキャンバスの最大値や最小値にする
-                    if ((a_d_pos_x + (this.width + this.pos_x)) > this.canvas.width) {
-                        a_d_pos_x = a_d_pos_x - ((a_d_pos_x + (this.width + this.pos_x)) - this.canvas.width);
-                        // 代わりにプレイヤーを動かす
-                        temp = playerX + _x;
-                    }
-                    if (a_d_pos_x < 0) {
-                        a_d_pos_x = 0;
-                        // 代わりにプレイヤーを動かす
-                        temp = playerX + _x;
-                    }
-                    // プレイヤーがマップからはみ出ないようにする
-                    if (((temp + (this.playerDemo.width)) < (this.width + this.pos_x)) &&
-                        ((temp) > this.pos_x)) {
-                        playerX = temp;
-                    }
-                }
-                // 補正済ではない
-                if (!isPlayerCenterY) {
-                    // 仮移動
-                    let temp = playerY;
-                    // 描画範囲がキャンバスの範囲を超えていたらキャンバスの最大値や最小値にする
-                    if ((a_d_pos_y + (this.height + this.pos_y)) > this.canvas.height) {
-                        a_d_pos_y = a_d_pos_y - ((a_d_pos_y + (this.height + this.pos_y)) - this.canvas.height);
-                        // 代わりにプレイヤーを動かす
-                        temp = playerY + _y;
-                    }
-                    if (a_d_pos_y < 0) {
-                        a_d_pos_y = 0;
-                        // 代わりにプレイヤーを動かす
-                        temp = playerY + _y;
-                    }
-                    // プレイヤーがマップからはみ出ないようにする
-                    if (((temp + (this.playerDemo.height)) < (this.height + this.pos_y)) &&
-                        ((temp) > this.pos_y)) {
-                        playerY = temp;
-                    }
-                }
-
-                // その場所のチップインデックスを左上、右上、左下、右下の四隅取得
-                let idx_lt, idx_rt, idx_lb, idx_rb;
-
-                // 左上
-                idx_lt = ((Math.floor((((playerY + this.hit_range_y) - this.pos_y) + a_d_pos_y) / this.w_chip_height)) * this.w_num_x) + (Math.floor((((playerX + this.hit_range_x) - this.pos_x) + a_d_pos_x) / this.w_chip_width));
-                // 右上
-                idx_rt = ((Math.floor((((playerY + this.hit_range_y) - this.pos_y) + a_d_pos_y) / this.w_chip_height)) * this.w_num_x) + (Math.floor(((((playerX + this.hit_range_x) - this.pos_x) + this.hit_range_w) + a_d_pos_x) / this.w_chip_width));
-                // 左下
-                idx_lb = ((Math.floor(((((playerY + this.hit_range_y) - this.pos_y) + this.hit_range_h) + a_d_pos_y) / this.w_chip_height)) * this.w_num_x) + (Math.floor((((playerX + this.hit_range_x) - this.pos_x) + a_d_pos_x) / this.w_chip_width));
-                // 右下
-                idx_rb = ((Math.floor(((((playerY + this.hit_range_y) - this.pos_y) + this.hit_range_h) + a_d_pos_y) / this.w_chip_height)) * this.w_num_x) + (Math.floor(((((playerX + this.hit_range_x) - this.pos_x) + this.hit_range_w) + a_d_pos_x) / this.w_chip_width));
-
-                // 四隅のどこかに壁がある
-                if (this.wall_array[idx_lt] ||
-                    this.wall_array[idx_rt] ||
-                    this.wall_array[idx_lb] ||
-                    this.wall_array[idx_rb]) {
-                    // 移動しない
-                }
-                // 四隅のどこにも壁はないなら移動する
-                else {
-                    this.d_pos_x = a_d_pos_x;
-                    this.d_pos_y = a_d_pos_y;
-                    this.playerDemo.pos_x = playerX;
-                    this.playerDemo.pos_y = playerY;
-                }
-            }
-            // プレイヤーが設定されていなければそのまま移動
-            else {
-                this.d_pos_x = a_d_pos_x;
-                this.d_pos_y = a_d_pos_y;
-            }
-        }
-        // プレイヤーの移動
-        movePlayerToX(_x) {
-            // 移動値分繰り返し
-            for (let i = 0; i < Math.abs(_x); i++) {
-                if (_x < 0) {
-                    this.pixel_1_Move(-1, 0);
-                }
-                else {
-                    this.pixel_1_Move(1, 0);
-                }
-            }
-        }
-        // プレイヤーの移動
-        movePlayerToY(_y) {
-            // 移動値分繰り返し
-            for (let i = 0; i < Math.abs(_y); i++) {
-                if (_y < 0) {
-                    this.pixel_1_Move(0, -1);
-                }
-                else {
-                    this.pixel_1_Move(0, 1);
-                }
-            }
-        }
-        // そこが壁かどうかの判定
-        isWall(_x, _y) {
-            return this.wall_array[((Math.floor((_y + this.d_pos_y) / this.w_chip_height)) * this.w_num_x) + (Math.floor((_x + this.d_pos_x) / this.w_chip_width))] == 1;
-        }
-    }
-    // チップマップクラス
-    class ChipMapDemo extends MapDemo {
-        constructor(_name, _res_idx, _idx_array, _wall_array, _w_chip_width, _w_chip_height, _idx_num_x, _idx_num_y, _w_num_x, _w_num_y, _width = V_WIDTH, _height = V_HEIGHT, _d_pos_x = 0, _d_pos_y = 0, _pos_x = 0, _pos_y = 0, _alpha = 1) {
-
-            // 親クラス呼び出し
-            super(_name, _res_idx, _wall_array, _w_chip_width, _w_chip_height, _w_num_x, _w_num_y, _width, _height, _d_pos_x, _d_pos_y, _pos_x, _pos_y, _alpha);
-
-            // マップ構成配列
-            this.idx_array = _idx_array;
-            // マップ配列の縦横数
-            this.idx_num_x = _idx_num_x;
-            this.idx_num_y = _idx_num_y;
-
-            // キャンバスサイズ
-            this.canvas.width = (this.w_num_x * this.w_chip_width);
-            this.canvas.height = (this.w_num_y * this.w_chip_height);
-
-            // タイプ名
-            this.type_name = "ChipMapDemo";
-        }
-        // 描画処理
-        draw(g, _res, _data) {
-            try {
-
-                // コンテキスト一時保存
-                g.save();
-                // 透明度
-                g.globalAlpha = this.alpha;
-
-                // 縦チップ
-                for (let y = 0; y < this.w_num_y; y++) {
-                    // 横チップ
-                    for (let x = 0; x < this.w_num_x; x++) {
-                        try {
-                            this.context.drawImage(_res[this.res_idx],
-                                ((this.idx_array[y * this.w_num_x + x] - 1) % this.idx_num_x) * this.w_chip_width,
-                                Math.floor((this.idx_array[y * this.w_num_x + x] - 1) / this.idx_num_x) * this.w_chip_height,
-                                this.w_chip_width, this.w_chip_height,
-                                x * this.w_chip_width, y * this.w_chip_height,
-                                this.w_chip_width, this.w_chip_height);
-                        }
-                        catch (e) {
-                            console.log("デモ描画エラー:" + this.name + " ① ");
-                        }
-                    }
-                }
-
-                // 描画範囲がキャンバスの範囲を超えていたらキャンバスの最大値や最小値にする
-                if ((this.d_pos_x + this.width) > this.canvas.width) {
-                    this.d_pos_x = this.d_pos_x - ((this.d_pos_x + this.width) - this.canvas.width);
-                }
-                if ((this.d_pos_y + this.height) > this.canvas.height) {
-                    this.d_pos_y = this.d_pos_y - ((this.d_pos_y + this.height) - this.canvas.height);
-                }
-                if (this.d_pos_x < 0) {
-                    this.d_pos_x = 0;
-                }
-                if (this.d_pos_y < 0) {
-                    this.d_pos_y = 0;
-                }
-
-                // 実際の描画
-                g.drawImage(this.canvas, this.d_pos_x, this.d_pos_y, this.width, this.height, this.pos_x, this.pos_y, this.width, this.height);
-
-                // コンテキストをsave時に戻す
-                g.restore();
-            }
-            catch (e) {
-                console.log("デモ描画エラー:" + this.name + " ② ");
-            }
-        }
-    }
-    // テクスチャマップクラス
-    class TextureMapDemo extends MapDemo {
-        constructor(_name, _res_idx, _wall_array, _w_chip_width, _w_chip_height, _w_num_x, _w_num_y, _w_width, _w_height, _width = V_WIDTH, _height = V_HEIGHT, _d_pos_x = 0, _d_pos_y = 0, _pos_x = 0, _pos_y = 0, _alpha = 1) {
-
-            // 親クラス呼び出し
-            super(_name, _res_idx, _wall_array, _w_chip_width, _w_chip_height, _w_num_x, _w_num_y, _width, _height, _d_pos_x, _d_pos_y, _pos_x, _pos_y, _alpha);
-
-            // テクスチャのサイズ
-            this.w_width = _w_width;
-            this.w_height = _w_height;
-
-            // キャンバスサイズ
-            this.canvas.width = this.w_width;
-            this.canvas.height = this.w_height;
-
-            // タイプ名
-            this.type_name = "TextureMapDemo";
-        }
-        // 描画処理
-        draw(g, _res, _data) {
-
-            try {
-                // コンテキスト一時保存
-                g.save();
-                // 透明度
-                g.globalAlpha = this.alpha;
-
-                try {
-                    // 描画
-                    this.context.drawImage(_res[this.res_idx], 0, 0, this.w_width, this.w_height);
-                }
-                catch (e) {
-                    console.log("デモ描画エラー:" + this.name + " ① ");
-                }
-
-                // 描画範囲がキャンバスの範囲を超えていたらキャンバスの最大値や最小値にする
-                if ((this.d_pos_x + this.width) > this.canvas.width) {
-                    this.d_pos_x = this.d_pos_x - ((this.d_pos_x + this.width) - this.canvas.width);
-                }
-                if ((this.d_pos_y + this.height) > this.canvas.height) {
-                    this.d_pos_y = this.d_pos_y - ((this.d_pos_y + this.height) - this.canvas.height);
-                }
-                if (this.d_pos_x < 0) {
-                    this.d_pos_x = 0;
-                }
-                if (this.d_pos_y < 0) {
-                    this.d_pos_y = 0;
-                }
-
-                // 実際の描画
-                g.drawImage(this.canvas, this.d_pos_x, this.d_pos_y, this.width, this.height, this.pos_x, this.pos_y, this.width, this.height);
-
-                // コンテキストをsave時に戻す
-                g.restore();
-            }
-            catch (e) {
-                console.log("デモ描画エラー:" + this.name + " ② ");
             }
         }
     }
