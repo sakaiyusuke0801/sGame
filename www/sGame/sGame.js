@@ -574,19 +574,19 @@ const sGame = (function () {
     }
     // 物理世界におけるプロパティクラス
     class WorldProp {
-        constructor(_onWorld, _fixedRotation, density, friction, restitution, bodytype) {
+        constructor(onWorld, fixedRotation, density, friction, restitution, bodytype) {
             // 物理世界への影響があるか
-            this.onWord = _onWorld;
+            this.onWord = onWorld.toLowerCase() === 'true';
             // ローテーション
-            this.fixedRotation = false;
+            this.fixedRotation = fixedRotation.toLowerCase() === 'true';
             // 密度
-            this.density = 1.0;
+            this.density = density;
             // 摩擦係数
-            this.friction = 1.5;
+            this.friction = friction;
             // 反発係数
-            this.restitution = 0.5;
+            this.restitution = restitution;
             // Box2dの剛体属性（初期値は静的）
-            this.bodytype = sBox2dBodyType.DynamicBody;
+            this.bodytype = bodytype;
         }
     }
     // デモ基底クラス
@@ -800,11 +800,11 @@ const sGame = (function () {
             // 線の幅
             this.line = _line;
             // 塗りつぶすか
-            if( _fill === undefined ){
+            if(_fill === undefined){
             	this.fill = false;
             }
             else{            
-            	this.fill = _fill;
+            	this.fill = _fill.toLowerCase() === 'true';
             }
         }
     }
@@ -1624,8 +1624,9 @@ const sGame = (function () {
     };
     // 公開
     return {
-        width: V_WIDTH,
-        height: V_HEIGHT,
+        gameWidth: V_WIDTH,
+        gameHeight: V_HEIGHT,
+        sBox2dBodyType:sBox2dBodyType,
         setSize: setSize,
         setFont: setFont,
         pushScene: pushScene,
