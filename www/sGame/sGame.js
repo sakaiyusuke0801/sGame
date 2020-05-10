@@ -926,7 +926,7 @@ const sGame = (function () {
                 // 色
                 g.fillStyle = this.color;
                 // サイズ、フォント
-                g.font = this.height + "px " + FONT;
+                g.font = this.size.h + "px " + FONT;
                 // 中央詰め
                 g.textAlign = "center";
                 // ベースラインも中央
