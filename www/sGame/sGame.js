@@ -766,6 +766,7 @@ const sGame = (function () {
         // 描画処理
         draw(g, _res, _data) {
             try {
+            	console.log("test");
                 // コンテキスト一時保存
                 g.save();
                 // 透明度
