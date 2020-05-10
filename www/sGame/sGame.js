@@ -608,12 +608,12 @@ const sGame = (function () {
 
             /* ワールドプロパティ */
             this.worldProp = new WorldProp(
-            	_obj.wp.onWorld, 
-            	_obj.wp.fixedRotation, 
-            	_obj.wp.density, 
-            	_obj.wp.friction, 
-            	_obj.wp.restitution, 
-            	_obj.wp.bodytype);
+                _obj.wp.onWorld,
+                _obj.wp.fixedRotation,
+                _obj.wp.density,
+                _obj.wp.friction,
+                _obj.wp.restitution,
+                _obj.wp.bodytype);
 
             /* リスナー */
             // 更新処理関数
@@ -694,7 +694,7 @@ const sGame = (function () {
             myBottom = this.pos.y + this.size.getHelfH();
             myLeft = this.pos.x - this.size.getHelfW();
             myRight = this.pos.x + this.size.getHelfW();
-            
+
             // 相手の位置
             targetTop = _demo.pos.y - _demo.size.getHelfH();
             targetBottom = _demo.pos.y + _demo.size.getHelfH();
@@ -766,17 +766,17 @@ const sGame = (function () {
         // 描画処理
         draw(g, _res, _data) {
             try {
-            	console.log("test");
                 // コンテキスト一時保存
                 g.save();
                 // 透明度
                 g.globalAlpha = this.alpha;
                 // 描画開始
+                //console.log(((this.now_idx - 1) % this.tile.col));
                 g.drawImage(
                     // イメージオブジェクト                       
                     _res[this.res],
                     // 描画範囲開始x
-                    (this.now_idx - 1 % this.tile.col) * this.size.w,
+                    ((this.now_idx - 1) % this.tile.col) * this.size.w,
                     // 描画範囲開始y
                     Math.floor((this.now_idx - 1) / this.tile.col) * this.size.h,
                     // 描画範囲終了
@@ -801,11 +801,11 @@ const sGame = (function () {
             // 線の幅
             this.line = _line;
             // 塗りつぶすか
-            if(_fill === undefined){
-            	this.fill = false;
+            if (_fill === undefined) {
+                this.fill = false;
             }
-            else{            
-            	this.fill = _fill.toLowerCase() === 'true';
+            else {
+                this.fill = _fill.toLowerCase() === 'true';
             }
         }
     }
@@ -956,20 +956,20 @@ const sGame = (function () {
 
             // 壁
             this.wall = _obj.wall;
-            
+
             // マップ全体のタイルサイズとタイル数
             this.w_tile_size = new Size(_obj.w_tile_size.w, _obj.w_tile_size.h);
             this.w_tile = new Tile(_obj.w_tile_col, _obj.w_tile_row);
-            
+
             // 描画位置
             this.d_pos = new Pos(_obj.d_pos.x, _obj.d_pos.y);
-            
+
             // 更新処理
             this.update = null;
 
             // プレイヤーデモ
             this.playerDemo = null;
-            
+
             // 衝突範囲（プレイヤーの左上を起点として）
             this.hit_range_x = 0;
             this.hit_range_y = 0;
@@ -1549,17 +1549,17 @@ const sGame = (function () {
     }, { passive: false });
     /*************************************/
 
-	/************ デバッグ用 **************/
-	let sConsoleBackUpNum = -1;
-	let sConsoleNum = function(_str, _num){
-		// 前と同じ内容でなければログを出力する
-		if(_num != sConsoleBackUpNum ){
-			console.log(_str + _num);
-			sConsoleBackUpNum = _num;
-		}
-	};
+    /************ デバッグ用 **************/
+    let sConsoleBackUpNum = -1;
+    let sConsoleNum = function (_str, _num) {
+        // 前と同じ内容でなければログを出力する
+        if (_num != sConsoleBackUpNum) {
+            console.log(_str + _num);
+            sConsoleBackUpNum = _num;
+        }
+    };
     /************************************/
-    
+
     /************* 公開関数 **************/
     // ゲーム画面の設定
     let setSize = function (_w, _h) {
@@ -1627,7 +1627,7 @@ const sGame = (function () {
     return {
         gameWidth: V_WIDTH,
         gameHeight: V_HEIGHT,
-        sBox2dBodyType:sBox2dBodyType,
+        sBox2dBodyType: sBox2dBodyType,
         setSize: setSize,
         setFont: setFont,
         pushScene: pushScene,
