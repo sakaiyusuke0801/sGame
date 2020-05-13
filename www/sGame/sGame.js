@@ -1112,14 +1112,6 @@ const sGame = (function () {
                     this.wall[idx_lb] ||
                     this.wall[idx_rb]) {
                     // 移動しない
-                    // console.log(this.wall[idx_lt]);
-                    // console.log(this.wall[idx_rt]);
-                    // console.log(this.wall[idx_lb]);
-                    // console.log(this.wall[idx_rb]);
-                    // this.d_pos.x = a_d_pos_x;
-                    // this.d_pos.y = a_d_pos_y;
-                    // this.playerDemo.pos.x = playerX;
-                    // this.playerDemo.pos.y = playerY;
                 }
                 // 四隅のどこにも壁はないなら移動する
                 else {
@@ -1286,7 +1278,7 @@ const sGame = (function () {
                 }
 
                 // 実際の描画
-                g.drawImage(this.canvas, this.d_pos.x, this.d_pos.y, this.size.w, this.size.h, this.pos.x, this.pos.y, this.size.w, this.size.h);
+                g.drawImage(this.canvas, this.d_pos.x, this.d_pos.y, this.size.w, this.size.h, (this.pos.x - this.size.getHelfW()), (this.pos.y - this.size.getHelfH()), this.size.w, this.size.h);
 
                 // コンテキストをsave時に戻す
                 g.restore();
