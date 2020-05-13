@@ -253,24 +253,25 @@ const sGame = (function () {
                 if (Object.keys(this.demo).length != 0) {
                     for (let key in this.demo) {
                         this.demo[key].updateFunc(this);
-
-                        // 世界が設定されていれば世界の更新をデモに反映させる
-                        if (this.world != null) {
-                            // 世界に設定されているボディの取得
-                            for (let body = this.world.GetBodyList(); body; body = body.GetNext()) {
-                                // 動的なボディ
-                                if (body.GetType() == sBox2dBodyType.DynamicBody) {
-                                    // 位置の取得
-                                    let position = body.GetPosition();
-                                    // ユーザーデータの取得
-                                    let userData = body.GetUserData();
-                                    try {
+                    }
+                    // 世界が設定されていれば世界の更新をデモに反映させる
+                    if (this.world != null) {
+                        // 世界に設定されているボディの取得
+                        for (let body = this.world.GetBodyList(); body; body = body.GetNext()) {
+                            // 動的なボディ
+                            if (body.GetType() == sBox2dBodyType.DynamicBody) {
+                                // 位置の取得
+                                let position = body.GetPosition();
+                                // ユーザーデータの取得
+                                let userData = body.GetUserData();
+                                try {
+                                    if (this.demo[userData].worldProp.onWord) {
                                         // ユーザーデータでアクセスして位置を反映
-                                        this.demo[userData].pos_x = position.x * BOX2D_MET_PIX;
-                                        this.demo[userData].pos_y = position.y * BOX2D_MET_PIX;
-                                    } catch (e) {
-                                        // なにもしない
+                                        this.demo[userData].pos.x = position.x * BOX2D_MET_PIX;
+                                        this.demo[userData].pos.y = position.y * BOX2D_MET_PIX;
                                     }
+                                } catch (e) {
+                                    // なにもしない
                                 }
                             }
                         }
@@ -282,7 +283,7 @@ const sGame = (function () {
                     // 物理世界を更新する
                     this.world.Step(1 / 30, 10, 10);
                     // デバック描画
-                    this.world.DrawDebugData();
+                    //this.world.DrawDebugData();
                     // 物理世界上の力をリセットする
                     this.world.ClearForces();
                 }
@@ -311,17 +312,17 @@ const sGame = (function () {
                 }
 
                 if (this.world != null) {
-                    // デバッグ描画の設定
-                    let debugDraw = new Box2D.Dynamics.b2DebugDraw();
-                    debugDraw.SetSprite(this.context);
-                    //描画スケール
-                    debugDraw.SetDrawScale(BOX2D_MET_PIX);
-                    //半透明値
-                    debugDraw.SetFillAlpha(1.0);
-                    //線の太さ
-                    debugDraw.SetLineThickness(1.0);
-                    debugDraw.SetFlags(Box2D.Dynamics.b2DebugDraw.e_shapeBit | Box2D.Dynamics.b2DebugDraw.e_jointBit);// 何をデバッグ描画するか
-                    this.world.SetDebugDraw(debugDraw);
+                    // // デバッグ描画の設定
+                    // let debugDraw = new Box2D.Dynamics.b2DebugDraw();
+                    // debugDraw.SetSprite(this.context);
+                    // //描画スケール
+                    // debugDraw.SetDrawScale(BOX2D_MET_PIX);
+                    // //半透明値
+                    // debugDraw.SetFillAlpha(1.0);
+                    // //線の太さ
+                    // debugDraw.SetLineThickness(1.0);
+                    // debugDraw.SetFlags(Box2D.Dynamics.b2DebugDraw.e_shapeBit | Box2D.Dynamics.b2DebugDraw.e_jointBit);// 何をデバッグ描画するか
+                    // this.world.SetDebugDraw(debugDraw);
                 }
             }
             // ロード中画面
@@ -351,8 +352,11 @@ const sGame = (function () {
             // 描画されているデモに剛体を割り当てる
             if (Object.keys(this.demo).length != 0) {
                 for (let key in this.demo) {
-                    // デモを世界に登録
-                    this.worldAddDemo(this.demo[key]);
+                    // 影響受けない設定なら無視
+                    if (this.demo[key].worldProp.onWord) {
+                        // デモを世界に登録
+                        this.worldAddDemo(this.demo[key]);
+                    }
                 }
             }
         }
@@ -392,31 +396,31 @@ const sGame = (function () {
 
                 // ボディ
                 let bodyDef = new b2BodyDef;
-                bodyDef.type = _demo.body;
-
-                // ローテンション
-                bodyDef.fixedRotation = _demo.fixedRotation;
+                bodyDef.type = _demo.worldProp.bodytype;
+                // ローテンションは任意にさせる予定
+                bodyDef.fixedRotation = _demo.worldProp.fixedRotation;
 
                 // 材質
                 var fixDef = new b2FixtureDef;
-                // 密度
-                fixDef.density = _demo.density;
-                // 摩擦係数
-                fixDef.friction = _demo.friction;
-                // 反発係数
-                fixDef.restitution = _demo.restitution;
+                // 密度（この辺は固定にする）
+                fixDef.density = _demo.worldProp.density;
+                // 摩擦係数（この辺は固定にする）
+                fixDef.friction = _demo.worldProp.friction;
+                // 反発係数（この辺は固定にする）
+                fixDef.restitution = _demo.worldProp.restitution;
 
                 // 円は円
                 if (_demo.type_name == "CircleDemo") {
-                    fixDef.shape = new b2CircleShape((_demo.radius - _demo.line) / BOX2D_MET_PIX);
+                    fixDef.shape = new b2CircleShape((((_demo.r - 1) /*+ _demo.shape.line*/) / BOX2D_MET_PIX ));
                 }
+                // 他は四角形
                 else {
                     fixDef.shape = new b2PolygonShape;
 
-                    fixDef.shape.SetAsOrientedBox(((_demo.width) / BOX2D_MET_PIX) - 0.92, ((_demo.height / 2.0) / BOX2D_MET_PIX), new b2Vec2(0, 0), 0.0);
-                    //fixDef.shape.SetAsBox((_demo.width / 2.0) / BOX2D_MET_PIX, (_demo.height / 2.0) / BOX2D_MET_PIX);
+                    fixDef.shape.SetAsOrientedBox((((_demo.size.w - 1) / 2.0) / BOX2D_MET_PIX), (((_demo.size.h - 1) / 2.0) / BOX2D_MET_PIX), new b2Vec2(0, 0), 0.0);
+                    //fixDef.shape.SetAsBox((_demo.size.w / 2.0) / BOX2D_MET_PIX, (_demo.size.h / 2.0) / BOX2D_MET_PIX);
                 }
-                bodyDef.position.Set(_demo.pos_x / BOX2D_MET_PIX, _demo.pos_y / BOX2D_MET_PIX);
+                bodyDef.position.Set(_demo.pos.getWorldPosX(), _demo.pos.getWorldPosY());
                 // 名前でユーザーデータの紐づけ
                 bodyDef.userData = _demo.name;
                 // ボディと材質を世界にセットする
@@ -576,9 +580,9 @@ const sGame = (function () {
     class WorldProp {
         constructor(onWorld, fixedRotation, density, friction, restitution, bodytype) {
             // 物理世界への影響があるか
-            this.onWord = onWorld.toLowerCase() === 'true';
+            this.onWord = onWorld;
             // ローテーション
-            this.fixedRotation = fixedRotation.toLowerCase() === 'true';
+            this.fixedRotation = fixedRotation;
             // 密度
             this.density = density;
             // 摩擦係数
@@ -608,8 +612,8 @@ const sGame = (function () {
 
             /* ワールドプロパティ */
             this.worldProp = new WorldProp(
-                _obj.wp.onWorld,
-                _obj.wp.fixedRotation,
+                _obj.wp.onWorld.toLowerCase() === 'true',
+                _obj.wp.fixedRotation.toLowerCase() === 'true',
                 parseFloat(_obj.wp.density),
                 parseFloat(_obj.wp.friction),
                 parseFloat(_obj.wp.restitution),
@@ -668,10 +672,10 @@ const sGame = (function () {
             let myTop, myBottom, myLeft, myRight;
 
             // 自身の位置
-            myTop = this.pos.y - this.size.getHelfH();
-            myBottom = this.pos.y + this.size.getHelfH();
-            myLeft = this.pos.x - this.size.getHelfW();
-            myRight = this.pos.x + this.size.getHelfW();
+            myTop = Math.round(this.pos.y - this.size.getHelfH());
+            myBottom = Math.round(this.pos.y + this.size.getHelfH());
+            myLeft = Math.round(this.pos.x - this.size.getHelfW());
+            myRight = Math.round(this.pos.x + this.size.getHelfW());
 
             // 相手の位置
             const targetTop = _y;
@@ -690,16 +694,16 @@ const sGame = (function () {
             let targetTop, targetBottom, targetLeft, targetRight;
 
             // 自身の位置
-            myTop = this.pos.y - this.size.getHelfH();
-            myBottom = this.pos.y + this.size.getHelfH();
-            myLeft = this.pos.x - this.size.getHelfW();
-            myRight = this.pos.x + this.size.getHelfW();
+            myTop = Math.round(this.pos.y - this.size.getHelfH());
+            myBottom = Math.round(this.pos.y + this.size.getHelfH());
+            myLeft = Math.round(this.pos.x - this.size.getHelfW());
+            myRight = Math.round(this.pos.x + this.size.getHelfW());
 
             // 相手の位置
-            targetTop = _demo.pos.y - _demo.size.getHelfH();
-            targetBottom = _demo.pos.y + _demo.size.getHelfH();
-            targetLeft = _demo.pos.x - _demo.size.getHelfW();
-            targetRight = _demo.pos.x + _demo.size.getHelfW();
+            targetTop = Math.round(_demo.pos.y - _demo.size.getHelfH());
+            targetBottom = Math.round(_demo.pos.y + _demo.size.getHelfH());
+            targetLeft = Math.round(_demo.pos.x - _demo.size.getHelfW());
+            targetRight = Math.round(_demo.pos.x + _demo.size.getHelfW());
 
             // 返却
             return (myTop < targetBottom && targetTop < myBottom) &&
@@ -1035,7 +1039,7 @@ const sGame = (function () {
 
                 // プレイヤーが真ん中ではない
                 if (this.playerDemo.pos.y != (this.size.getHelfH() + (this.pos.y - this.size.getHelfH()))) {
-                    
+
                     // 仮移動
                     let temp = playerY + _y;
                     // プレイヤーがマップからはみ出ないようにする
@@ -1055,11 +1059,10 @@ const sGame = (function () {
                     let temp = playerX;
                     // 描画範囲がキャンバスの範囲を超えていたらキャンバスの最大値や最小値にする
                     if ((a_d_pos_x + (this.size.w + (this.pos.x - this.size.getHelfW()))) > this.canvas.width) {
-                        console.log(this.canvas.width);
                         a_d_pos_x = a_d_pos_x - ((a_d_pos_x + (this.size.w + (this.pos.x - this.size.getHelfW()))) - this.canvas.width);
                         // 代わりにプレイヤーを動かす
                         temp = playerX + _x;
-                        
+
                     }
                     if (a_d_pos_x < 0) {
                         a_d_pos_x = 0;
