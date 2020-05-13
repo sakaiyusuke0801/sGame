@@ -598,21 +598,21 @@ const sGame = (function () {
             // リソースインデックス
             this.res = _obj.res;
             // サイズ
-            this.size = new Size(_obj.size.w, _obj.size.h);
+            this.size = new Size(Number(_obj.size.w), Number(_obj.size.h));
             // 位置
-            this.pos = new Pos(_obj.pos.x, _obj.pos.y);
+            this.pos = new Pos(Number(_obj.pos.x), Number(_obj.pos.y));
             // 拡縮
-            this.scale = new Scale(_obj.scale.x, _obj.scale.y);
+            this.scale = new Scale(Number(_obj.scale.x), Number(_obj.scale.y));
             // 透過
-            this.alpha = _obj.alpha;
+            this.alpha = Number(_obj.alpha);
 
             /* ワールドプロパティ */
             this.worldProp = new WorldProp(
                 _obj.wp.onWorld,
                 _obj.wp.fixedRotation,
-                _obj.wp.density,
-                _obj.wp.friction,
-                _obj.wp.restitution,
+                parseFloat(_obj.wp.density),
+                parseFloat(_obj.wp.friction),
+                parseFloat(_obj.wp.restitution),
                 _obj.wp.bodytype);
 
             /* リスナー */
@@ -757,9 +757,9 @@ const sGame = (function () {
             // 親クラス呼び出し
             super(_name, _obj);
             // 現在のインデックス
-            this.now_idx = _obj.now_idx;
+            this.now_idx = Number(_obj.now_idx);
             // タイルサイズ
-            this.tile = new Tile(_obj.tile.col, _obj.tile.row);
+            this.tile = new Tile(Number(_obj.tile.col), Number(_obj.tile.row));
             // タイプ名
             this.type_name = "ChipTextureDemo";
         }
@@ -816,12 +816,12 @@ const sGame = (function () {
             // 親クラス呼び出し
             super(_name, _obj);
             // 半径
-            this.r = _obj.r;
+            this.r = Number(_obj.r);
             // サイズも半径に合わせる
             this.size.w = this.r * 2;
             this.size.h = this.r * 2;
             // 図形プロパティ
-            this.shape = new Shape(_obj.shape.color, _obj.shape.line, _obj.shape.fill);
+            this.shape = new Shape(_obj.shape.color, Number(_obj.shape.line), _obj.shape.fill);
             // タイプ名
             this.type_name = "CircleDemo";
         }
@@ -867,7 +867,7 @@ const sGame = (function () {
             // 親クラス呼び出し
             super(_name, _obj);
             // 図形プロパティ
-            this.shape = new Shape(_obj.shape.color, _obj.shape.line, _obj.shape.fill);
+            this.shape = new Shape(_obj.shape.color, Number(_obj.shape.line), _obj.shape.fill);
             // タイプ名
             this.type_name = "RectDemo";
         }
@@ -950,19 +950,19 @@ const sGame = (function () {
             // 共通
             this.name = _name;
             this.res = _obj.res;
-            this.size = new Size(_obj.size.w, _obj.size.h);
-            this.pos = new Pos(_obj.pos.x, _obj.pos.y);
-            this.alpha = _obj.alpha;
+            this.size = new Size(Number(_obj.size.w), Number(_obj.size.h));
+            this.pos = new Pos(Number(_obj.pos.x), Number(_obj.pos.y));
+            this.alpha = Number(_obj.alpha);
 
             // 壁
             this.wall = _obj.wall;
 
             // マップ全体のタイルサイズとタイル数
-            this.w_tile_size = new Size(_obj.w_tile_size.w, _obj.w_tile_size.h);
-            this.w_tile = new Tile(_obj.w_tile_col, _obj.w_tile_row);
+            this.w_tile_size = new Size(Number(_obj.w_tile_size.w), Number(_obj.w_tile_size.h));
+            this.w_tile = new Tile(Number(_obj.w_tile.col), Number(_obj.w_tile.row));
 
             // 描画位置
-            this.d_pos = new Pos(_obj.d_pos.x, _obj.d_pos.y);
+            this.d_pos = new Pos(Number(_obj.d_pos.x), Number(_obj.d_pos.y));
 
             // 更新処理
             this.update = null;
@@ -995,16 +995,11 @@ const sGame = (function () {
         // プレイヤーデモセット
         setPlayerDemo(_demo, _hit_range_x, _hit_range_y, _hit_range_w, _hit_range_h) {
             if (_demo != null) {
-                // 今のところ以下３つのデモ
-                if (_demo.type_name == "TextureDemo" ||
-                    _demo.type_name == "ChipTextureDemo" ||
-                    _demo.type_name == "RectDemo") {
-                    this.playerDemo = _demo;
-                    this.hit_range_x = _hit_range_x;
-                    this.hit_range_y = _hit_range_y;
-                    this.hit_range_w = _hit_range_w;
-                    this.hit_range_h = _hit_range_h;
-                }
+                this.playerDemo = _demo;
+                this.hit_range_x = _hit_range_x;
+                this.hit_range_y = _hit_range_y;
+                this.hit_range_w = _hit_range_w;
+                this.hit_range_h = _hit_range_h;
             }
         }
         // ローカル関数
@@ -1024,12 +1019,12 @@ const sGame = (function () {
                 let isPlayerCenterY = false;
 
                 // プレイヤーが真ん中ではない
-                if (((playerX) + (this.playerDemo.size.w / 2)) != ((this.size.w / 2) + this.pos.x)) {
+                if (this.playerDemo.pos.x != (this.size.getHelfW() + (this.pos.x - this.size.getHelfW()))) {
                     // 仮移動
                     let temp = playerX + _x;
                     // プレイヤーがマップからはみ出ないようにする
-                    if (((temp + (this.playerDemo.size.w)) < (this.size.w + this.pos.x)) &&
-                        ((temp) > this.pos.x)) {
+                    if (((temp + (this.playerDemo.size.w)) < (this.size.w + (this.pos.x - this.size.getHelfW()))) &&
+                        ((temp) > (this.pos.x - this.size.getHelfW()))) {
                         playerX = temp;
                     }
                     // 画面は動かさない
@@ -1037,13 +1032,15 @@ const sGame = (function () {
                     // フラグON
                     isPlayerCenterX = true;
                 }
+
                 // プレイヤーが真ん中ではない
-                if (((playerY) + (this.playerDemo.size.h / 2)) != ((this.size.h / 2) + this.pos.y)) {
+                if (this.playerDemo.pos.y != (this.size.getHelfH() + (this.pos.y - this.size.getHelfH()))) {
+                    
                     // 仮移動
                     let temp = playerY + _y;
                     // プレイヤーがマップからはみ出ないようにする
-                    if (((temp + (this.playerDemo.size.h)) < (this.size.h + this.pos.y)) &&
-                        ((temp) > this.pos.y)) {
+                    if (((temp + (this.playerDemo.size.h)) < (this.size.h + (this.pos.y - this.size.getHelfH()))) &&
+                        ((temp) > (this.pos.y - this.size.getHelfH()))) {
                         playerY = temp;
                     }
                     // 画面は動かさない
@@ -1052,16 +1049,17 @@ const sGame = (function () {
                     isPlayerCenterY = true;
                 }
 
-
                 // 補正済ではない
                 if (!isPlayerCenterX) {
                     // 仮移動
                     let temp = playerX;
                     // 描画範囲がキャンバスの範囲を超えていたらキャンバスの最大値や最小値にする
-                    if ((a_d_pos_x + (this.size.w + this.pos.x)) > this.canvas.width) {
-                        a_d_pos_x = a_d_pos_x - ((a_d_pos_x + (this.size.w + this.pos.x)) - this.canvas.width);
+                    if ((a_d_pos_x + (this.size.w + (this.pos.x - this.size.getHelfW()))) > this.canvas.width) {
+                        console.log(this.canvas.width);
+                        a_d_pos_x = a_d_pos_x - ((a_d_pos_x + (this.size.w + (this.pos.x - this.size.getHelfW()))) - this.canvas.width);
                         // 代わりにプレイヤーを動かす
                         temp = playerX + _x;
+                        
                     }
                     if (a_d_pos_x < 0) {
                         a_d_pos_x = 0;
@@ -1069,8 +1067,8 @@ const sGame = (function () {
                         temp = playerX + _x;
                     }
                     // プレイヤーがマップからはみ出ないようにする
-                    if (((temp + (this.playerDemo.size.w)) < (this.size.w + this.pos.x)) &&
-                        ((temp) > this.pos.x)) {
+                    if (((temp + (this.playerDemo.size.w)) < (this.size.w + (this.pos.x - this.size.getHelfW()))) &&
+                        ((temp) > (this.pos.x - this.size.getHelfW()))) {
                         playerX = temp;
                     }
                 }
@@ -1079,8 +1077,8 @@ const sGame = (function () {
                     // 仮移動
                     let temp = playerY;
                     // 描画範囲がキャンバスの範囲を超えていたらキャンバスの最大値や最小値にする
-                    if ((a_d_pos_y + (this.size.h + this.pos.y)) > this.canvas.height) {
-                        a_d_pos_y = a_d_pos_y - ((a_d_pos_y + (this.size.h + this.pos.y)) - this.canvas.height);
+                    if ((a_d_pos_y + (this.size.h + (this.pos.y - this.size.getHelfH()))) > this.canvas.height) {
+                        a_d_pos_y = a_d_pos_y - ((a_d_pos_y + (this.size.h + (this.pos.y - this.size.getHelfH()))) - this.canvas.height);
                         // 代わりにプレイヤーを動かす
                         temp = playerY + _y;
                     }
@@ -1090,8 +1088,8 @@ const sGame = (function () {
                         temp = playerY + _y;
                     }
                     // プレイヤーがマップからはみ出ないようにする
-                    if (((temp + (this.playerDemo.size.h)) < (this.size.h + this.pos.y)) &&
-                        ((temp) > this.pos.y)) {
+                    if (((temp + (this.playerDemo.size.h)) < (this.size.h + (this.pos.y - this.size.getHelfH()))) &&
+                        ((temp) > (this.pos.y - this.size.getHelfH()))) {
                         playerY = temp;
                     }
                 }
@@ -1100,27 +1098,35 @@ const sGame = (function () {
                 let idx_lt, idx_rt, idx_lb, idx_rb;
 
                 // 左上
-                idx_lt = ((Math.floor((((playerY + this.hit_range_y) - this.pos.y) + a_d_pos_y) / this.w_tile_size.h)) * this.w_tile.col) + (Math.floor((((playerX + this.hit_range_x) - this.pos.x) + a_d_pos_x) / this.w_tile_size.w));
+                idx_lt = ((Math.floor((((playerY + this.hit_range_y) - (this.pos.y - this.size.getHelfH())) + a_d_pos_y) / this.w_tile_size.h)) * this.w_tile.col) + (Math.floor((((playerX + this.hit_range_x) - (this.pos.x - this.size.getHelfW())) + a_d_pos_x) / this.w_tile_size.w));
                 // 右上
-                idx_rt = ((Math.floor((((playerY + this.hit_range_y) - this.pos.y) + a_d_pos_y) / this.w_tile_size.h)) * this.w_tile.col) + (Math.floor(((((playerX + this.hit_range_x) - this.pos_x) + this.hit_range_w) + a_d_pos_x) / this.w_tile_size.w));
+                idx_rt = ((Math.floor((((playerY + this.hit_range_y) - (this.pos.y - this.size.getHelfH())) + a_d_pos_y) / this.w_tile_size.h)) * this.w_tile.col) + (Math.floor(((((playerX + this.hit_range_x) - (this.pos.x - this.size.getHelfW())) + this.hit_range_w) + a_d_pos_x) / this.w_tile_size.w));
                 // 左下
-                idx_lb = ((Math.floor(((((playerY + this.hit_range_y) - this.pos.y) + this.hit_range_h) + a_d_pos_y) / this.w_tile_size.h)) * this.w_tile.col) + (Math.floor((((playerX + this.hit_range_x) - this.pos.x) + a_d_pos_x) / this.w_tile_size.w));
+                idx_lb = ((Math.floor(((((playerY + this.hit_range_y) - (this.pos.y - this.size.getHelfH())) + this.hit_range_h) + a_d_pos_y) / this.w_tile_size.h)) * this.w_tile.col) + (Math.floor((((playerX + this.hit_range_x) - (this.pos.x - this.size.getHelfW())) + a_d_pos_x) / this.w_tile_size.w));
                 // 右下
-                idx_rb = ((Math.floor(((((playerY + this.hit_range_y) - this.pos.y) + this.hit_range_h) + a_d_pos_y) / this.w_tile_size.h)) * this.w_tile.col) + (Math.floor(((((playerX + this.hit_range_x) - this.pos.x) + this.hit_range_w) + a_d_pos_x) / this.w_tile_size.w));
+                idx_rb = ((Math.floor(((((playerY + this.hit_range_y) - (this.pos.y - this.size.getHelfH())) + this.hit_range_h) + a_d_pos_y) / this.w_tile_size.h)) * this.w_tile.col) + (Math.floor(((((playerX + this.hit_range_x) - (this.pos.x - this.size.getHelfW())) + this.hit_range_w) + a_d_pos_x) / this.w_tile_size.w));
 
                 // 四隅のどこかに壁がある
-                if (this.wall_array[idx_lt] ||
-                    this.wall_array[idx_rt] ||
-                    this.wall_array[idx_lb] ||
-                    this.wall_array[idx_rb]) {
+                if (this.wall[idx_lt] ||
+                    this.wall[idx_rt] ||
+                    this.wall[idx_lb] ||
+                    this.wall[idx_rb]) {
                     // 移動しない
+                    // console.log(this.wall[idx_lt]);
+                    // console.log(this.wall[idx_rt]);
+                    // console.log(this.wall[idx_lb]);
+                    // console.log(this.wall[idx_rb]);
+                    // this.d_pos.x = a_d_pos_x;
+                    // this.d_pos.y = a_d_pos_y;
+                    // this.playerDemo.pos.x = playerX;
+                    // this.playerDemo.pos.y = playerY;
                 }
                 // 四隅のどこにも壁はないなら移動する
                 else {
-                    this.d_pos_x = a_d_pos_x;
-                    this.d_pos_y = a_d_pos_y;
-                    this.playerDemo.pos.x = playerX;
-                    this.playerDemo.pos.y = playerY;
+                    this.d_pos.x = a_d_pos_x;
+                    this.d_pos.y = a_d_pos_y;
+                    this.playerDemo.pos.x = playerX + this.playerDemo.size.getHelfW();
+                    this.playerDemo.pos.y = playerY + this.playerDemo.size.getHelfH();
                 }
             }
             // プレイヤーが設定されていなければそのまま移動
@@ -1155,7 +1161,7 @@ const sGame = (function () {
         }
         // そこが壁かどうかの判定
         isWall(_x, _y) {
-            return this.wall_array[((Math.floor((_y + this.d_pos.y) / this.w_tile_size.h)) * this.w_tile.col) + (Math.floor((_x + this.d_pos.x) / this.w_tile_size.w))] == 1;
+            return this.wall[((Math.floor((_y + this.d_pos.y) / this.w_tile_size.h)) * this.w_tile.col) + (Math.floor((_x + this.d_pos.x) / this.w_tile_size.w))] == 1;
         }
     }
     // チップマップクラス
@@ -1167,8 +1173,8 @@ const sGame = (function () {
 
             // マップ構成配列
             this.map = _obj.map;
-            // マップ配列の縦横数
-            this.m_tile = new Tile(_obj.m_tile.col, _obj.m_tile.row);
+            // マップタイルの縦横数
+            this.m_tile = new Tile(Number(_obj.m_tile.col), Number(_obj.m_tile.row));
 
             // キャンバスサイズ
             this.canvas.width = (this.w_tile.col * this.w_tile_size.w);
@@ -1185,7 +1191,6 @@ const sGame = (function () {
                 g.save();
                 // 透明度
                 g.globalAlpha = this.alpha;
-
                 // 縦チップ
                 for (let y = 0; y < this.w_tile.row; y++) {
                     // 横チップ
@@ -1203,7 +1208,6 @@ const sGame = (function () {
                         }
                     }
                 }
-
                 // 描画範囲がキャンバスの範囲を超えていたらキャンバスの最大値や最小値にする
                 if ((this.d_pos.x + this.size.w) > this.canvas.width) {
                     this.d_pos.x = this.d_pos.x - ((this.d_pos.x + this.size.w) - this.canvas.width);
@@ -1219,7 +1223,11 @@ const sGame = (function () {
                 }
 
                 // 実際の描画
-                g.drawImage(this.canvas, this.d_pos.x, this.d_pos.y, this.size.w, this.size.h, this.pos.x, this.pos.y, this.size.w, this.size.h);
+                g.drawImage(this.canvas,
+                    this.d_pos.x, this.d_pos.y,
+                    this.size.w, this.size.h,
+                    (this.pos.x - this.size.getHelfW()), (this.pos.y - this.size.getHelfH()),
+                    this.size.w, this.size.h);
 
                 // コンテキストをsave時に戻す
                 g.restore();
