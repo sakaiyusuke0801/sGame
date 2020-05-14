@@ -269,6 +269,7 @@ const sGame = (function () {
                                         // ユーザーデータでアクセスして位置を反映
                                         this.demo[userData].pos.x = position.x * BOX2D_MET_PIX;
                                         this.demo[userData].pos.y = position.y * BOX2D_MET_PIX;
+                                        this.demo[userData].angle = body.GetAngle() * BOX2D_MET_PIX;
                                     }
                                 } catch (e) {
                                     // なにもしない
@@ -411,13 +412,13 @@ const sGame = (function () {
 
                 // 円は円
                 if (_demo.type_name == "CircleDemo") {
-                    fixDef.shape = new b2CircleShape((((_demo.r - 1) /*+ _demo.shape.line*/) / BOX2D_MET_PIX ));
+                    fixDef.shape = new b2CircleShape((((_demo.r /*- 1*/) /*+ _demo.shape.line*/) / BOX2D_MET_PIX));
                 }
                 // 他は四角形
                 else {
                     fixDef.shape = new b2PolygonShape;
 
-                    fixDef.shape.SetAsOrientedBox((((_demo.size.w - 1) / 2.0) / BOX2D_MET_PIX), (((_demo.size.h - 1) / 2.0) / BOX2D_MET_PIX), new b2Vec2(0, 0), 0.0);
+                    fixDef.shape.SetAsOrientedBox((((_demo.size.w /*- 1*/) / 2.0) / BOX2D_MET_PIX), (((_demo.size.h /*- 1*/) / 2.0) / BOX2D_MET_PIX), new b2Vec2(0, 0), 0.0);
                     //fixDef.shape.SetAsBox((_demo.size.w / 2.0) / BOX2D_MET_PIX, (_demo.size.h / 2.0) / BOX2D_MET_PIX);
                 }
                 bodyDef.position.Set(_demo.pos.getWorldPosX(), _demo.pos.getWorldPosY());
@@ -609,6 +610,8 @@ const sGame = (function () {
             this.scale = new Scale(Number(_obj.scale.x), Number(_obj.scale.y));
             // 透過
             this.alpha = Number(_obj.alpha);
+            // 回転
+            this.angle = Number(_obj.angle);
 
             /* ワールドプロパティ */
             this.worldProp = new WorldProp(
@@ -727,6 +730,9 @@ const sGame = (function () {
                 g.save();
                 // 透明度
                 g.globalAlpha = this.alpha;
+                // 画像を回転
+                let rad = this.angle * Math.PI / 180;
+                g.setTransform(Math.cos(rad), Math.sin(rad), -Math.sin(rad), Math.cos(rad), this.pos.x - this.pos.x * Math.cos(rad) + this.pos.y * Math.sin(rad), this.pos.y - this.pos.x * Math.sin(rad) - this.pos.y * Math.cos(rad));
                 // 描画開始
                 g.drawImage(
                     // イメージオブジェクト
@@ -774,8 +780,10 @@ const sGame = (function () {
                 g.save();
                 // 透明度
                 g.globalAlpha = this.alpha;
+                // 画像を回転
+                let rad = this.angle * Math.PI / 180;
+                g.setTransform(Math.cos(rad), Math.sin(rad), -Math.sin(rad), Math.cos(rad), this.pos.x - this.pos.x * Math.cos(rad) + this.pos.y * Math.sin(rad), this.pos.y - this.pos.x * Math.sin(rad) - this.pos.y * Math.cos(rad));
                 // 描画開始
-                //console.log(((this.now_idx - 1) % this.tile.col));
                 g.drawImage(
                     // イメージオブジェクト                       
                     _res[this.res],
@@ -836,6 +844,9 @@ const sGame = (function () {
                 g.save();
                 // 透明度
                 g.globalAlpha = this.alpha;
+                // 画像を回転
+                let rad = this.angle * Math.PI / 180;
+                g.setTransform(Math.cos(rad), Math.sin(rad), -Math.sin(rad), Math.cos(rad), this.pos.x - this.pos.x * Math.cos(rad) + this.pos.y * Math.sin(rad), this.pos.y - this.pos.x * Math.sin(rad) - this.pos.y * Math.cos(rad));
                 // パスリセット
                 g.beginPath();
                 // 円描画
@@ -882,6 +893,9 @@ const sGame = (function () {
                 g.save();
                 // 透明度
                 g.globalAlpha = this.alpha;
+                // 画像を回転
+                let rad = this.angle * Math.PI / 180;
+                g.setTransform(Math.cos(rad), Math.sin(rad), -Math.sin(rad), Math.cos(rad), this.pos.x - this.pos.x * Math.cos(rad) + this.pos.y * Math.sin(rad), this.pos.y - this.pos.x * Math.sin(rad) - this.pos.y * Math.cos(rad));
                 // パスリセット
                 g.beginPath();
                 // 四角形描画
@@ -928,6 +942,9 @@ const sGame = (function () {
                 g.save();
                 // 透明度
                 g.globalAlpha = this.alpha;
+                // 画像を回転
+                let rad = this.angle * Math.PI / 180;
+                g.setTransform(Math.cos(rad), Math.sin(rad), -Math.sin(rad), Math.cos(rad), this.pos.x - this.pos.x * Math.cos(rad) + this.pos.y * Math.sin(rad), this.pos.y - this.pos.x * Math.sin(rad) - this.pos.y * Math.cos(rad));
                 // 色
                 g.fillStyle = this.color;
                 // サイズ、フォント
