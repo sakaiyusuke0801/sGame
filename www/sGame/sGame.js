@@ -114,6 +114,8 @@ const sGame = (function () {
             this.started = false;
             // 物理世界
             this.world = null;
+            // 削除ボディ
+            this.destbody = [];
         }
         // 初期化処理
         init() {
@@ -167,6 +169,7 @@ const sGame = (function () {
         }
         // デモの削除
         delDemo(_name) {
+            this.destbody.push(this.demo[_name].body);
             delete this.demo[_name];
         }
         // リソースのセット
@@ -197,7 +200,7 @@ const sGame = (function () {
                 }
                 // cordovaではない場合
                 else {
-                    // ループ属性付与
+                    // ループ属性付与   
                     _media.loop = true;
                     // 時間0
                     _media.currentTime = 0;
@@ -260,13 +263,13 @@ const sGame = (function () {
                         for (let body = this.world.GetBodyList(); body; body = body.GetNext()) {
                             // 動的なボディ
                             if (body.GetType() == sBox2dBodyType.DynamicBody) {
-                                // 位置の取得
-                                let position = body.GetPosition();
-                                // ユーザーデータの取得
-                                let userData = body.GetUserData();
                                 try {
+                                    // 位置の取得
+                                    let position = body.GetPosition();
+                                    // ユーザーデータの取得
+                                    let userData = body.GetUserData();
                                     if (this.demo[userData].worldProp.onWord) {
-                                        // ユーザーデータでアクセスして位置を反映
+                                        // ユーザーデータでアクセスして位置と回転を反映
                                         this.demo[userData].pos.x = position.x * BOX2D_MET_PIX;
                                         this.demo[userData].pos.y = position.y * BOX2D_MET_PIX;
                                         this.demo[userData].angle = body.GetAngle() * BOX2D_MET_PIX;
@@ -283,10 +286,14 @@ const sGame = (function () {
                 if (this.world != null) {
                     // 物理世界を更新する
                     this.world.Step(1 / 30, 10, 10);
-                    // デバック描画
-                    //this.world.DrawDebugData();
                     // 物理世界上の力をリセットする
                     this.world.ClearForces();
+
+                    // ボディの削除
+                    for (let destroy of this.destbody) {
+                        this.world.DestroyBody(destroy);
+                    }
+                    this.destbody = [];
                 }
             }
         }
@@ -310,20 +317,6 @@ const sGame = (function () {
                             this.demo[key].draw(this.context, this.res.res, this.data);
                         }
                     }
-                }
-
-                if (this.world != null) {
-                    // // デバッグ描画の設定
-                    // let debugDraw = new Box2D.Dynamics.b2DebugDraw();
-                    // debugDraw.SetSprite(this.context);
-                    // //描画スケール
-                    // debugDraw.SetDrawScale(BOX2D_MET_PIX);
-                    // //半透明値
-                    // debugDraw.SetFillAlpha(1.0);
-                    // //線の太さ
-                    // debugDraw.SetLineThickness(1.0);
-                    // debugDraw.SetFlags(Box2D.Dynamics.b2DebugDraw.e_shapeBit | Box2D.Dynamics.b2DebugDraw.e_jointBit);// 何をデバッグ描画するか
-                    // this.world.SetDebugDraw(debugDraw);
                 }
             }
             // ロード中画面
@@ -403,11 +396,11 @@ const sGame = (function () {
 
                 // 材質
                 var fixDef = new b2FixtureDef;
-                // 密度（この辺は固定にする）
+                // 密度
                 fixDef.density = _demo.worldProp.density;
-                // 摩擦係数（この辺は固定にする）
+                // 摩擦係数
                 fixDef.friction = _demo.worldProp.friction;
-                // 反発係数（この辺は固定にする）
+                // 反発係数
                 fixDef.restitution = _demo.worldProp.restitution;
 
                 // 円は円
@@ -425,7 +418,10 @@ const sGame = (function () {
                 // 名前でユーザーデータの紐づけ
                 bodyDef.userData = _demo.name;
                 // ボディと材質を世界にセットする
-                this.world.CreateBody(bodyDef).CreateFixture(fixDef);
+                let body = this.world.CreateBody(bodyDef);
+                body.CreateFixture(fixDef);
+                // デモにもボディをセットする
+                _demo.body = body;
             }
         }
     }
@@ -549,11 +545,19 @@ const sGame = (function () {
             this.w = _w;
             this.h = _h;
         }
+        // 半分
         getHelfW() {
             return Math.floor(this.w / 2);
         }
         getHelfH() {
             return Math.floor(this.h / 2);
+        }
+        // ワールドサイズ
+        getWorldSizeW() {
+            return this.w / BOX2D_MET_PIX;
+        }
+        getWorldSizeH() {
+            return this.h / BOX2D_MET_PIX;
         }
     }
     // 位置クラス
@@ -613,7 +617,7 @@ const sGame = (function () {
             // 回転
             this.angle = Number(_obj.angle);
 
-            /* ワールドプロパティ */
+            // ワールドプロパティ
             this.worldProp = new WorldProp(
                 _obj.wp.onWorld.toLowerCase() === 'true',
                 _obj.wp.fixedRotation.toLowerCase() === 'true',
@@ -621,10 +625,15 @@ const sGame = (function () {
                 parseFloat(_obj.wp.friction),
                 parseFloat(_obj.wp.restitution),
                 _obj.wp.bodytype);
+            // ボディ
+            this.body = null;
 
             /* リスナー */
             // 更新処理関数
             this.update = null;
+
+            // ポイントにこのデモが存在するかの判定
+            this.exist_pointer = false;
         }
         // サウンド再生
         startSound(_media) {
@@ -668,6 +677,63 @@ const sGame = (function () {
         // フレーム処理セット
         setUpdate(_update) {
             this.update = _update;
+        }
+        // ボディに力を加える
+        bodyApplyForce(_fx, _fy, _px, _py) {
+            if (this.body != null) {
+                // 力の方向
+                let force = new Box2D.Common.Math.b2Vec2(_fx, _fy);
+                // 加える位置
+                let pos = new Box2D.Common.Math.b2Vec2(_px / BOX2D_MET_PIX, _py / BOX2D_MET_PIX);
+                // 力を加える（瞬間的な力）
+                //this.body.ApplyForce(force, this.body.GetWorldCenter());
+                this.body.ApplyImpulse(force, this.body.GetWorldCenter());
+            }
+        }
+        // ワールドポイントに自分自身が存在するか
+        existWorldPoint(_scene, _x, _y) {
+            if (this.body != null) {
+                // 判定値初期化
+                this.exist_pointer = false;
+                // ワールドポイント取得
+                let point = new Box2D.Common.Math.b2Vec2(_x / BOX2D_MET_PIX, _y / BOX2D_MET_PIX);
+                // コールバック
+                let callback = function (fixture) {
+                    // ユーザーデータの取得
+                    let userData = fixture.GetBody().GetUserData();
+                    if (userData == this.name) {
+                        // 名前が同じなら存在したとして返却
+                        this.exist_pointer = true;
+                        // 終了を知らせる
+                        return false;
+                    }
+                    // trueを返せば次のfixtureにいくらしい
+                    return true;
+                };
+                // ワールド内探索
+                _scene.world.QueryPoint(callback.bind(this), point);
+            }
+            // 結果を返す
+            return this.exist_pointer;
+        }
+        // そのシーンのワールド内で指定のデモが自分と接触しているか
+        contactDemoInWorld(_scene, _demo) {
+            if (this.body != null) {
+                // コンタクトリストの取得
+                let contact = _scene.world.GetContactList();
+                while (contact != null) {
+                    // コンタクトリストから接触しているデモを取得
+                    let userDataA = contact.GetFixtureA().GetBody().GetUserData();
+                    let userDataB = contact.GetFixtureB().GetBody().GetUserData();
+                    // どちらかにお互いの名前があればtrue
+                    if ((this.name == userDataA || this.name == userDataB) && (_demo.name == userDataA || _demo.name == userDataB)) {
+                        return true;
+                    }
+                    contact = contact.GetNext();
+                }
+                // ひっからなければfalse終了
+                return false;
+            }
         }
         // 自身との当り判定
         isHit(_x, _y, _w, _h) {
