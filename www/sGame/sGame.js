@@ -778,6 +778,19 @@ const sGame = (function () {
             return (myTop < targetBottom && targetTop < myBottom) &&
                 (myLeft < targetRight && targetLeft < myRight);
         }
+        // ワールドでのBodyとFixture更新
+        updateBodyFixture() {
+            // 円は円
+            if (this.type_name == "CircleDemo") {
+                this.body.SetPosition(new Box2D.Common.Math.b2Vec2(this.pos.x / BOX2D_MET_PIX, this.pos.y / BOX2D_MET_PIX));
+                this.body.GetFixtureList().GetShape().SetRadius((((_demo.r /*- 1*/) /*+ _demo.shape.line*/) / BOX2D_MET_PIX));
+            }
+            // 他は四角形
+            else {
+                this.body.SetPosition(new Box2D.Common.Math.b2Vec2(this.pos.x / BOX2D_MET_PIX, this.pos.y / BOX2D_MET_PIX));
+                this.body.GetFixtureList().GetShape().SetAsOrientedBox((((this.size.w /*- 1*/) / 2.0) / BOX2D_MET_PIX), (((this.size.h /*- 1*/) / 2.0) / BOX2D_MET_PIX), new Box2D.Common.Math.b2Vec2(0, 0), 0.0);
+            }
+        }
     }
 
     // テクスチャデモクラス
